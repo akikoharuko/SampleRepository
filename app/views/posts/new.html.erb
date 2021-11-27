@@ -1,0 +1,88 @@
+<h1>SHARE PHOTO</h1>
+<h3>新規投稿</h3>
+<%= link_to "投稿一覧に戻る", posts_path %>
+
+<%= form_for @post do |f| %>
+  <div class="field">
+    <%= f.label :image %>
+    <%= f.file_field :image %>
+  </div>
+  <div class="field">
+    <%= f.label :site %>
+    <%= f.text_field :site, :size => 140 %>
+  </div>
+  <div class="field">
+    <%= f.label :tool %>
+    <%= f.text_field :tool, :size => 140 %>
+  </div>
+  <div class="field">
+    <%= f.label :setting %>
+    <%= f.text_field :setting, :size => 140 %>
+  </div>
+  <div class="field">
+    <%= f.label :content %>
+    <%= f.text_field :content, :size => 140 %>
+  </div>
+  
+  <%#= 追加、addressカラムに保存するためのフォーム form_for ~ endの中で作成 %>
+  <div class="field">
+    <%= f.label :address %>
+    <%= f.text_field :address, :size => 140 %>
+  </div>
+  <%#= 追加、addressカラムの情報を地図で表示させるためのボタン、クリックするとcodeAddress()が実行%>
+  <div class="field">
+      <input type="button" value="場所を地図で表示" onclick="codeAddress()">
+  </div>
+
+  <%= f.submit "投稿する" %>
+<% end %>
+
+<%#= 追加、mapが表示される部分 %>
+<div id="map"></div>
+
+<%#= 追加、<div id="map"></div>の大きさを定義 400px×400px 〇〇.scssに書いても良い。 %>
+<style>
+    #map {
+        height: 400px;
+        width: 400px;
+    }
+</style>
+
+<script>
+let map
+
+//mapの表示関数。center:{lat:〇〇,lng:〇〇},zoom: 〇,の〇は好きな値に変更可能。
+function initMap(){
+  geocoder = new google.maps.Geocoder()
+
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: {lat: 43.220327, lng:142.863474},
+    zoom: 7,
+  });
+}
+
+let geocoder
+
+//<input type="button" value="場所を地図で表示" onclick="codeAddress()">の具体的な中身
+function codeAddress(){
+  //右辺のtweet_addressの部分はaddressカラムの入力フォームの "id" を書く。今回はf.text_field :addressの部分
+  //idの確認方法はgoogle chromeのデベロッパーツールでみる。
+  let inputAddress = document.getElementById('post_address').value;
+
+  geocoder.geocode( { 'address': inputAddress}, function(results, status) {
+    if (status == 'OK') {
+      map.setCenter(results[0].geometry.location);
+      map.setZoom(17);
+      var marker = new google.maps.Marker({
+          map: map,
+          position: results[0].geometry.location
+      });
+    } else {
+      alert('該当する結果がありませんでした：' + status);
+    }
+  });   
+}
+
+</script>
+<%#= .envファイルに書かれているAPIキーを呼び出す部分。%>
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= ENV['API_KEY']%>&callback=initMap" async defer></script>

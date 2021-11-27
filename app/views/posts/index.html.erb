@@ -1,0 +1,116 @@
+<h1>SHARE PHOTO</h1>
+
+<%= button_to 'ログアウト', destroy_user_session_path, method: :delete %>
+
+<h3>投稿一覧</h3>
+
+<h3>投稿を検索</h3>
+ <%= form_tag({controller:"posts",action:"index"}, method: :get) do %>
+   <%= text_field_tag :search %>
+   <%= submit_tag '検索する'  %>
+<% end %>
+
+<%= link_to "新規投稿へ", new_post_path %>
+
+<% if user_signed_in? %>
+<%= link_to "マイページへ", user_path(current_user.id) %>　
+<% end %>
+
+<div class="posts-container">
+    <% @posts.each do |t| %>
+<div class="post">
+    <%= image_tag t.image_url if t.image? %>
+    <%#=t.user.email %>
+    <%#=t.image %>
+    <%= t.site%>
+    <%= t.tool%>
+    <%= t.setting%>
+    <%= t.content%>
+    <% if user_signed_in? %>
+        <% if current_user.already_liked?(t) %>
+            <%= link_to post_like_path(id: t.id, post_id: t.id), method: :delete do %>
+                <i class="fas fa-heart"></i><%= t.likes.count %>
+            <% end %>
+        <% else %>
+            <%= link_to post_likes_path(id: t.id, post_id: t.id), method: :post do %>
+                <i class="far fa-heart"></i><%= t.likes.count %>
+            <% end %>
+        <% end %>
+    <% else %>
+        <i class="far fa-heart"></i><%= t.likes.count %>
+    <% end %>
+
+    <%= t.created_at %>
+    <%= link_to "詳細へ", post_path(t.id) %>
+    <%= link_to "編集する", edit_post_path(t.id) %>
+    <%= button_to "削除する", post_path(t.id), method: :delete %>
+    </div>
+    <% end %>
+</div>
+
+<%#= 追加 %>
+<%#= mapが表示される部分 %>
+<div id="map"></div>
+
+<%#= 追加 %>
+<%#= <div id="map"></div>の大きさを定義 400px×400px 〇〇.scssに書いても良い。 %>
+<style>
+    #map {
+        height: 400px;
+        width: 400px;
+    }
+</style>
+<%#= mapを実際に表示させる関数をまとめた部分、バックエンドのためユーザーからは見れない。%>
+<script>
+    let map
+
+    // mapの表示関数 
+    function initMap() {
+        geocoder = new google.maps.Geocoder()
+
+        // mapの初期位置, 縮尺を定義
+        map = new google.maps.Map(document.getElementById("map"),{
+            //google mapの中心位置。lat：緯度、lng：経度 緯度経度は適宜変更可能。
+            center: {
+                lat: 35.6458437,
+                lng: 135.7046171
+            },
+            //初期表示の拡大・縮小ができる(数字が小さいほど縮小される。)
+            zoom: 6,
+        });
+
+        // 投稿テーブルにあるそれぞれのレコードをmap上に表示 @tweets部分を自分のコントローラーに合うように変更すること。
+        <% @posts.each do |m| %>
+            (function(){
+            var contentString = "住所：<%= m.address %>"; 
+
+            // マーカーを立てる
+            var marker = new google.maps.Marker({
+                position:{lat: <%= m.latitude %>, lng: <%= m.longitude %>},
+                map: map,
+                title: contentString
+            });
+
+            })();
+        <% end %>
+    }
+</script>
+<%#= .envファイルに書かれているAPIキーを呼び出す部分。%>
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= ENV['API_KEY']%>&callback=initMap" async defer></script>
+
+<style>
+<body>
+    <header>
+        <h1>SHARE PHOTO</h1>
+            <div class="header-list">
+                <ul>
+                <li><%= link_to "ホーム", posts_path %></li>
+                <li><%= link_to "新規投稿", new_post_path %></li>
+                </ul>
+            </div>
+    </header>
+    <main>
+        <%= yield %>
+    </main>
+    </body>
+</style>
